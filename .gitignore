@@ -1,6 +1,7 @@
 # Cache
 __pycache__/*
 .ipynb_checkpoints/*
+utils/__pycache__/*
 
 # Virtual environment
 outbreak-env/*
