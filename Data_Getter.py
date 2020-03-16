@@ -7,19 +7,21 @@ import requests
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import pandas as pd
-import numpy as np
-import shapefile as shp
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 
 BASE_URL = "https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/"
-#FILE_DIR = os.path.dirname(__file__)
-FILE_DIR = "C:/Users/peter/Documents/Python Scripts/Outbreak_Mapping"
+FILE_DIR = os.path.dirname(__file__)
+
 
 def get_table(url):
     """
     Gets data from url (csv) and converts to Pandas table
+
+    Args:
+        url (str): URL to dataset (csv) in GitHub
+
+    Returns:
+        df (pandas.dataframe): the data from GitHub formatted as a dataframe
     """
     print("Reading:", url)
     html = requests.get(url).text
@@ -40,31 +42,51 @@ def get_table(url):
     return df
 
 
-#def main():
-now = datetime.today()
-today = datetime(now.year, now.month, now.day)
-fName = "Confirmed_" + (today-timedelta(days=1)).strftime("%m-%d-%y") + ".csv"
-fPath = os.path.join(FILE_DIR, "timeseries_data", fName)
-if not os.path.exists(fPath):
-    # Get confirmed cases timeseries data
-    confirmed_url = BASE_URL + "csse_covid_19_time_series/time_series_19-covid-Confirmed.csv"
-    cases = get_table(confirmed_url)
-    max_date = datetime.strptime(list(cases.columns)[-1], "%m/%d/%y")
-    fName = "Confirmed_" + max_date.strftime("%m-%d-%y") + ".csv"
-    print("Saving file:", fName)
-    cases.to_csv(os.path.join(FILE_DIR, "timeseries_data", fName), sep=",", index=False)
-else:
-    print("Reading data:", fName)
-    cases = pd.read_csv(fPath, sep=",", header=0)
-print(cases.head())
+def get_timeseries_data(kwd):
+    """
+    Gets the specified time-series dataset from the GitHub API if new
+     data available, otherwise reads current saved dataset.
+    
+    Args:
+        kwd (str): Keyword (either "Confirmed", "Deaths", or "Recovered")
+    """
+    now = datetime.today()
+    today = datetime(now.year, now.month, now.day)
+    fName = kwd + "_" + (today-timedelta(days=1)).strftime("%m-%d-%y") + ".csv"
+    fPath = os.path.join(FILE_DIR, "timeseries_data", fName)
+    if not os.path.exists(fPath):
+        # Get new timeseries data from API
+        API_url = BASE_URL + f"csse_covid_19_time_series/time_series_19-covid-{kwd}.csv"
+        cases = get_table(API_url)
+        max_date = datetime.strptime(list(cases.columns)[-1], "%m/%d/%y")
+        fName = kwd + "_" + max_date.strftime("%m-%d-%y") + ".csv"
+        print("Saving file:", fName)
+        cases.to_csv(os.path.join(FILE_DIR, "timeseries_data", fName), sep=",", index=False)
+    else:
+        print("Reading data:", fName)
+        cases = pd.read_csv(fPath, sep=",", header=0)
+    return cases
 
-us = cases[cases["Country/Region"] == "US"]
-states = us[us.iloc[:,-1] != 0]
 
-# Plot US states on map
-sns.set(style="whitegrid", palette="pastel", color_codes=True)
-sns.mpl.rc("figure", figsize=(10,6))
+def get_confirmed():
+    """
+    Returns:
+        cases (pandas.dataframe): The updated dataset for confirmed cases
+    """
+    return get_timeseries_data("Confirmed")
 
 
-# if __name__ == "__main__":
-#     main()
+def get_recovered():
+    """
+    Returns:
+        cases (pandas.dataframe): The updated dataset for recovered cases
+    """
+    return get_timeseries_data("Recovered")
+
+
+def get_deaths():
+    """
+    Returns:
+        cases (pandas.dataframe): The updated dataset for deaths
+    """
+    return get_timeseries_data("Deaths")
