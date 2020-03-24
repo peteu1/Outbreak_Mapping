@@ -1,6 +1,13 @@
 """
 Gets data from Johns Hopkins GitHub repository:
     https://github.com/CSSEGISandData/COVID-19
+
+
+Data set cons:
+    - No county data, just US state/world country
+
+Data set pros:
+    - Most complete dataset
 """
 import os
 import requests
@@ -10,7 +17,7 @@ import pandas as pd
 
 
 BASE_URL = "https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/"
-FILE_DIR = os.path.dirname(__file__)
+FILE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
 def get_table(url):
@@ -61,7 +68,7 @@ def get_timeseries_data(kwd):
         max_date = datetime.strptime(list(cases.columns)[-1], "%m/%d/%y")
         fName = kwd + "_" + max_date.strftime("%m-%d-%y") + ".csv"
         print("Saving file:", fName)
-        cases.to_csv(os.path.join(FILE_DIR, "timeseries_data", fName), sep=",", index=False)
+        cases.to_csv(fPath, sep=",", index=False)
     else:
         print("Reading data:", fName)
         cases = pd.read_csv(fPath, sep=",", header=0)
@@ -90,3 +97,6 @@ def get_deaths():
         cases (pandas.dataframe): The updated dataset for deaths
     """
     return get_timeseries_data("Deaths")
+
+
+get_confirmed()
